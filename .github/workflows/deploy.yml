@@ -1,0 +1,90 @@
+name: Deploy Fan-out Infrastructure
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  AWS_REGION: us-west-2
+  NODE_VERSION: '18'
+  TERRAFORM_WORKING_DIR: './terraform'
+
+jobs:
+  build-and-deploy:
+    name: 'Build and Deploy'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Install Dependencies
+      run: |
+        cd src/order-processor && npm install
+        cd ../notification-processor && npm install
+
+    - name: Create Lambda Packages
+      run: |
+        cd src/order-processor && zip -r ../../terraform/order-processor.zip .
+        cd ../notification-processor && zip -r ../../terraform/notification-processor.zip .
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+
+    - name: Terraform Init
+      working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+      run: terraform init -backend=true
+
+    - name: Terraform Format
+      working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+      run: terraform fmt -check
+
+    - name: Terraform Plan
+      working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+      id: plan
+      run: terraform plan -no-color
+      if: github.event_name == 'pull_request'
+
+    - name: Update Pull Request
+      uses: actions/github-script@v6
+      if: github.event_name == 'pull_request'
+      env:
+        PLAN: "${{ steps.plan.outputs.stdout }}"
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const output = `#### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+          
+          <details><summary>Show Plan</summary>
+          
+          \`\`\`\n
+          ${process.env.PLAN}
+          \`\`\`
+          
+          </details>`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })
+
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+      run: terraform apply -auto-approve
