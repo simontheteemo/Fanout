@@ -6,21 +6,21 @@ resource "aws_sns_topic" "main" {
 # Dead Letter Queues
 resource "aws_sqs_queue" "orders_dlq" {
   name                      = "${var.project_name}-order-dlq-${var.environment}"
-  message_retention_seconds = 1209600  # 14 days
+  message_retention_seconds = 1209600 # 14 days
 }
 
 resource "aws_sqs_queue" "notifications_dlq" {
   name                      = "${var.project_name}-notification-dlq-${var.environment}"
-  message_retention_seconds = 1209600  # 14 days
+  message_retention_seconds = 1209600 # 14 days
 }
 
 # Main Queues
 resource "aws_sqs_queue" "orders" {
-  name                      = "${var.project_name}-order-queue-${var.environment}"
+  name                       = "${var.project_name}-order-queue-${var.environment}"
   visibility_timeout_seconds = 30
-  message_retention_seconds  = 86400  # 1 day
-  receive_wait_time_seconds  = 20     # Long polling
-  
+  message_retention_seconds  = 86400 # 1 day
+  receive_wait_time_seconds  = 20    # Long polling
+
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.orders_dlq.arn
     maxReceiveCount     = 3
@@ -28,11 +28,11 @@ resource "aws_sqs_queue" "orders" {
 }
 
 resource "aws_sqs_queue" "notifications" {
-  name                      = "${var.project_name}-notification-queue-${var.environment}"
+  name                       = "${var.project_name}-notification-queue-${var.environment}"
   visibility_timeout_seconds = 30
   message_retention_seconds  = 86400
   receive_wait_time_seconds  = 20
-  
+
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.notifications_dlq.arn
     maxReceiveCount     = 3
