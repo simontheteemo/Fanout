@@ -1,88 +1,27 @@
-# Lambda roles and policies
-resource "aws_iam_role" "lambda_role" {
-  name = "lambda_sqs_role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      }
-    ]
-  })
+provider "aws" {
+  region = var.aws_region
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_basic" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  role       = aws_iam_role.lambda_role.name
+module "messaging" {
+  source = "./modules/messaging"
+
+  project_name = var.project_name
+  environment  = var.environment
 }
 
-resource "aws_iam_role_policy" "lambda_sqs" {
-  name = "lambda_sqs_policy"
-  role = aws_iam_role.lambda_role.id
+module "lambda" {
+  source = "./modules/lambda"
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "sqs:ReceiveMessage",
-          "sqs:DeleteMessage",
-          "sqs:GetQueueAttributes"
-        ]
-        Resource = [
-          aws_sqs_queue.orders.arn,
-          aws_sqs_queue.notifications.arn
-        ]
-      }
-    ]
-  })
-}
-
-# Order Processing Lambda
-resource "aws_lambda_function" "order_processor" {
-  filename         = "order-processor.zip"
-  function_name    = "order-processor"
-  role            = aws_iam_role.lambda_role.arn
-  handler         = "index.handler"
-  runtime         = "nodejs18.x"
-
-  environment {
-    variables = {
-      QUEUE_URL = aws_sqs_queue.orders.id
-    }
-  }
-}
-
-# Notification Processing Lambda
-resource "aws_lambda_function" "notification_processor" {
-  filename         = "notification-processor.zip"
-  function_name    = "notification-processor"
-  role            = aws_iam_role.lambda_role.arn
-  handler         = "index.handler"
-  runtime         = "nodejs18.x"
-
-  environment {
-    variables = {
-      QUEUE_URL = aws_sqs_queue.notifications.id
-    }
-  }
-}
-
-# Lambda Event Source Mappings
-resource "aws_lambda_event_source_mapping" "order_queue_mapping" {
-  event_source_arn = aws_sqs_queue.orders.arn
-  function_name    = aws_lambda_function.order_processor.arn
-  batch_size       = 1
-}
-
-resource "aws_lambda_event_source_mapping" "notification_queue_mapping" {
-  event_source_arn = aws_sqs_queue.notifications.arn
-  function_name    = aws_lambda_function.notification_processor.arn
-  batch_size       = 1
+  project_name            = var.project_name
+  environment            = var.environment
+  
+  order_queue_arn        = module.messaging.order_queue_arn
+  order_queue_url        = module.messaging.order_queue_url
+  notification_queue_arn = module.messaging.notification_queue_arn
+  notification_queue_url = module.messaging.notification_queue_url
+  
+  order_dlq_arn         = module.messaging.order_dlq_arn
+  order_dlq_url         = module.messaging.order_dlq_url
+  notification_dlq_arn  = module.messaging.notification_dlq_arn
+  notification_dlq_url  = module.messaging.notification_dlq_url
 }
