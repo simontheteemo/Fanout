@@ -59,9 +59,9 @@ resource "aws_lambda_function" "order_processor" {
 
   environment {
     variables = {
-      QUEUE_URL = var.order_queue_url
-      ENV       = var.environment
-      DYNAMODB_TABLE  = var.orders_table_name
+      QUEUE_URL      = var.order_queue_url
+      ENV            = var.environment
+      DYNAMODB_TABLE = var.orders_table_name
     }
   }
 }
