@@ -61,6 +61,7 @@ resource "aws_lambda_function" "order_processor" {
     variables = {
       QUEUE_URL = var.order_queue_url
       ENV       = var.environment
+      DYNAMODB_TABLE  = var.orders_table_name
     }
   }
 }
@@ -93,4 +94,28 @@ resource "aws_lambda_event_source_mapping" "notification_queue_mapping" {
   event_source_arn = var.notification_queue_arn
   function_name    = aws_lambda_function.notification_processor.arn
   batch_size       = 1
+}
+
+resource "aws_iam_role_policy" "lambda_dynamodb" {
+  name = "${var.project_name}-lambda-dynamodb-policy-${var.environment}"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query"
+        ]
+        Resource = [
+          var.orders_table_arn
+        ]
+      }
+    ]
+  })
 }

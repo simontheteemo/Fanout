@@ -1,15 +1,23 @@
-// src/order-processor/index.js
-exports.handler = async (event, context) => {
+const AWS = require('aws-sdk');
+const dynamodb = new AWS.DynamoDB.DocumentClient();
+
+exports.handler = async (event) => {
     console.log('Processing order event:', JSON.stringify(event, null, 2));
     
     for (const record of event.Records) {
-        const body = JSON.parse(record.body);
-        const message = JSON.parse(body.Message);
-        
-        console.log('Processing order:', message);
-        
-        // Add your order processing logic here
-        await processOrder(message);
+        try {
+            const body = JSON.parse(record.body);
+            const message = JSON.parse(body.Message);
+            
+            console.log('Processing order:', message);
+            
+            // Save to DynamoDB
+            await saveOrder(message);
+            
+        } catch (error) {
+            console.error('Error processing order:', error);
+            throw error;
+        }
     }
     
     return {
@@ -18,8 +26,20 @@ exports.handler = async (event, context) => {
     };
 };
 
-async function processOrder(order) {
-    // Simulate order processing
-    console.log(`Processing order ID: ${order.orderId}`);
-    await new Promise(resolve => setTimeout(resolve, 100));
+async function saveOrder(order) {
+    const timestamp = new Date().toISOString();
+    
+    const params = {
+        TableName: process.env.DYNAMODB_TABLE,
+        Item: {
+            orderId: order.orderId || `ORDER-${Date.now()}`,
+            timestamp: timestamp,
+            ...order,
+            status: 'RECEIVED'
+        }
+    };
+
+    console.log('Saving order to DynamoDB:', params);
+    await dynamodb.put(params).promise();
+    console.log('Order saved successfully');
 }

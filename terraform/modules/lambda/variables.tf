@@ -27,3 +27,13 @@ variable "notification_queue_url" {
   description = "URL of the notification queue"
   type        = string
 }
+
+variable "orders_table_arn" {
+  description = "ARN of the orders DynamoDB table"
+  type        = string
+}
+
+variable "orders_table_name" {
+  description = "Name of the orders DynamoDB table"
+  type        = string
+}

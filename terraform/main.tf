@@ -22,4 +22,6 @@ module "lambda" {
   notification_queue_arn = module.messaging.notification_queue_arn
   notification_queue_url = module.messaging.notification_queue_url
 
+  orders_table_arn       = module.database.orders_table_arn
+  orders_table_name      = module.database.orders_table_name
 }
