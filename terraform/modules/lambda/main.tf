@@ -78,7 +78,7 @@ resource "aws_lambda_function" "notification_processor" {
   memory_size   = 128
 
   source_code_hash = filebase64sha256("${path.module}/notification-processor.zip")
-  
+
   environment {
     variables = {
       QUEUE_URL = var.notification_queue_url
@@ -119,6 +119,25 @@ resource "aws_iam_role_policy" "lambda_dynamodb" {
         Resource = [
           var.orders_table_arn
         ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "lambda_ssm" {
+  name = "${var.project_name}-lambda-ssm-policy-${var.environment}"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters"
+        ]
+        Resource = "arn:aws:ssm:us-west-2:*:parameter/fanout-demo/*"
       }
     ]
   })
