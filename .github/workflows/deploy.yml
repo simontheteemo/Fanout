@@ -25,7 +25,6 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
 
-
     - name: Install Lambda Dependencies
       run: |
         cd src/order-processor
@@ -56,7 +55,7 @@ jobs:
     - name: Terraform Init
       working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
       run: terraform init -backend=true
-
+    
     - name: Terraform Format
       working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
       run: terraform fmt -recursive
@@ -65,11 +64,11 @@ jobs:
       working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
       id: plan
       run: terraform plan -no-color
-      if: github.event_name == 'pull_request'
 
+    # Only create PR comment if it's a pull request
     - name: Update Pull Request
-      uses: actions/github-script@v6
       if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
       env:
         PLAN: "${{ steps.plan.outputs.stdout }}"
       with:
