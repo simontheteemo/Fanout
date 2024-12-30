@@ -28,6 +28,13 @@ async function getConfig() {
         };
         
         const result = await ssm.getParameter(params).promise();
+        console.log('SSM Parameter retrieved:', {
+            Name: result.Parameter.Name,
+            Type: result.Parameter.Type,
+            Version: result.Parameter.Version,
+            Value: result.Parameter.Value // In production, you might want to remove this line
+        });
+        
         const config = JSON.parse(result.Parameter.Value);
         
         // Update cache
