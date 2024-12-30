@@ -1,8 +1,8 @@
 {
-    "name": "notification-processor",
-    "version": "1.0.0",
-    "main": "index.js",
-    "dependencies": {
-      "aws-sdk": "^2.1499.0"
-    }
+  "name": "order-processor",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "lodash": "^4.17.21"
   }
+}

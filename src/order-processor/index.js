@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk');
+const _ = require('lodash');
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event) => {
@@ -11,8 +12,12 @@ exports.handler = async (event) => {
             
             console.log('Processing order:', message);
             
-            // Save to DynamoDB
-            await saveOrder(message);
+            // Example using lodash to transform the order data
+            const transformedOrder = _.transform(message, (result, value, key) => {
+                result[_.toUpper(key)] = value;
+            }, {});
+            
+            await saveOrder(transformedOrder);
             
         } catch (error) {
             console.error('Error processing order:', error);
@@ -26,20 +31,18 @@ exports.handler = async (event) => {
     };
 };
 
-async function saveOrder(order) {
-    const timestamp = new Date().toISOString();
-    
+async function saveOrder(message) {
     const params = {
         TableName: process.env.DYNAMODB_TABLE,
         Item: {
-            orderId: order.orderId || `ORDER-${Date.now()}`,
-            timestamp: timestamp,
-            ...order,
+            orderId: _.get(message, 'ORDERID', `ORDER-${Date.now()}`),
+            timestamp: new Date().toISOString(),
+            ...message,
             status: 'RECEIVED'
         }
     };
 
-    console.log('Saving order to DynamoDB:', params);
+    console.log('Saving to DynamoDB:', params);
     await dynamodb.put(params).promise();
     console.log('Order saved successfully');
 }

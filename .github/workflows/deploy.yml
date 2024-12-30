@@ -27,19 +27,23 @@ jobs:
 
     - name: Build Lambda Functions
       run: |
-        # Clean any existing zip files
-        rm -rf terraform/modules/lambda/*.zip
+        # Clean up
+        rm -rf terraform/modules/lambda/*.zip build
         
-        # Create Lambda directory
-        mkdir -p terraform/modules/lambda
+        # Create build directories
+        mkdir -p terraform/modules/lambda build/order-processor build/notification-processor
         
         # Build order processor
-        cd src/order-processor
+        cd build/order-processor
+        cp -r ../../src/order-processor/* .
+        npm install --production
         zip -r ../../terraform/modules/lambda/order-processor.zip .
         cd ../..
         
         # Build notification processor
-        cd src/notification-processor
+        cd build/notification-processor
+        cp -r ../../src/notification-processor/* .
+        npm install --production
         zip -r ../../terraform/modules/lambda/notification-processor.zip .
         cd ../..
 
