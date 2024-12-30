@@ -1,5 +1,5 @@
 {
-    "name": "order-processor",
+    "name": "notification-processor",
     "version": "1.0.0",
     "main": "index.js",
     "dependencies": {
