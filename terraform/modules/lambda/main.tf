@@ -40,9 +40,7 @@ resource "aws_iam_role_policy" "lambda_sqs" {
         ]
         Resource = [
           var.order_queue_arn,
-          var.notification_queue_arn,
-          var.order_dlq_arn,
-          var.notification_dlq_arn
+          var.notification_queue_arn
         ]
       }
     ]

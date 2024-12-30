@@ -27,23 +27,3 @@ variable "notification_queue_url" {
   description = "URL of the notification queue"
   type        = string
 }
-
-variable "order_dlq_arn" {
-  description = "ARN of the order DLQ"
-  type        = string
-}
-
-variable "order_dlq_url" {
-  description = "URL of the order DLQ"
-  type        = string
-}
-
-variable "notification_dlq_arn" {
-  description = "ARN of the notification DLQ"
-  type        = string
-}
-
-variable "notification_dlq_url" {
-  description = "URL of the notification DLQ"
-  type        = string
-}
