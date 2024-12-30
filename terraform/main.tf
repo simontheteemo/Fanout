@@ -9,8 +9,6 @@ module "messaging" {
   environment  = var.environment
 }
 
-
-
 module "lambda" {
   source = "./modules/lambda"
 
@@ -24,4 +22,11 @@ module "lambda" {
 
   orders_table_arn       = module.database.orders_table_arn
   orders_table_name      = module.database.orders_table_name
+}
+
+module "database" {
+  source = "./modules/database"
+
+  project_name = var.project_name
+  environment  = var.environment
 }
