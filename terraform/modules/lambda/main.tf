@@ -57,6 +57,8 @@ resource "aws_lambda_function" "order_processor" {
   timeout       = 30
   memory_size   = 128
 
+  source_code_hash = filebase64sha256("${path.module}/order-processor.zip")
+
   environment {
     variables = {
       QUEUE_URL      = var.order_queue_url
@@ -75,6 +77,8 @@ resource "aws_lambda_function" "notification_processor" {
   timeout       = 30
   memory_size   = 128
 
+  source_code_hash = filebase64sha256("${path.module}/notification-processor.zip")
+  
   environment {
     variables = {
       QUEUE_URL = var.notification_queue_url

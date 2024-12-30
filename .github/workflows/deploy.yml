@@ -25,20 +25,21 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
 
-    - name: Install Lambda Dependencies
-      run: |
-        cd src/order-processor
-        npm install
-        cd ../notification-processor
-        npm install
-        cd ../..
-
     - name: Build Lambda Functions
       run: |
+        # Clean any existing zip files
+        rm -rf terraform/modules/lambda/*.zip
+        
+        # Create Lambda directory
         mkdir -p terraform/modules/lambda
+        
+        # Build order processor
         cd src/order-processor
         zip -r ../../terraform/modules/lambda/order-processor.zip .
-        cd ../notification-processor
+        cd ../..
+        
+        # Build notification processor
+        cd src/notification-processor
         zip -r ../../terraform/modules/lambda/notification-processor.zip .
         cd ../..
 
@@ -55,41 +56,11 @@ jobs:
     - name: Terraform Init
       working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
       run: terraform init -backend=true
-    
-    - name: Terraform Format
-      working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-      run: terraform fmt -recursive
 
     - name: Terraform Plan
       working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
       id: plan
       run: terraform plan -no-color
-
-    # Only create PR comment if it's a pull request
-    - name: Update Pull Request
-      if: github.event_name == 'pull_request'
-      uses: actions/github-script@v6
-      env:
-        PLAN: "${{ steps.plan.outputs.stdout }}"
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const output = `#### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-          
-          <details><summary>Show Plan</summary>
-          
-          \`\`\`\n
-          ${process.env.PLAN}
-          \`\`\`
-          
-          </details>`;
-          
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: output
-          })
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
