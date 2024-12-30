@@ -84,43 +84,6 @@ resource "aws_lambda_function" "notification_processor" {
   }
 }
 
-# DLQ Processor Lambdas
-resource "aws_lambda_function" "order_dlq_processor" {
-  filename      = "${path.module}/dlq-processor.zip"
-  function_name = "${var.project_name}-order-dlq-processor-${var.environment}"
-  role          = aws_iam_role.lambda_role.arn
-  handler       = "index.handler"
-  runtime       = "nodejs18.x"
-  timeout       = 60
-  memory_size   = 128
-
-  environment {
-    variables = {
-      DLQ_URL            = var.order_dlq_url
-      ORIGINAL_QUEUE_URL = var.order_queue_url
-      ENV                = var.environment
-    }
-  }
-}
-
-resource "aws_lambda_function" "notification_dlq_processor" {
-  filename      = "${path.module}/notification-processor.zip"
-  function_name = "${var.project_name}-notification-dlq-processor-${var.environment}"
-  role          = aws_iam_role.lambda_role.arn
-  handler       = "index.handler"
-  runtime       = "nodejs18.x"
-  timeout       = 60
-  memory_size   = 128
-
-  environment {
-    variables = {
-      DLQ_URL            = var.notification_dlq_url
-      ORIGINAL_QUEUE_URL = var.notification_queue_url
-      ENV                = var.environment
-    }
-  }
-}
-
 # Event Source Mappings
 resource "aws_lambda_event_source_mapping" "order_queue_mapping" {
   event_source_arn = var.order_queue_arn
@@ -131,17 +94,5 @@ resource "aws_lambda_event_source_mapping" "order_queue_mapping" {
 resource "aws_lambda_event_source_mapping" "notification_queue_mapping" {
   event_source_arn = var.notification_queue_arn
   function_name    = aws_lambda_function.notification_processor.arn
-  batch_size       = 1
-}
-
-resource "aws_lambda_event_source_mapping" "order_dlq_mapping" {
-  event_source_arn = var.order_dlq_arn
-  function_name    = aws_lambda_function.order_dlq_processor.arn
-  batch_size       = 1
-}
-
-resource "aws_lambda_event_source_mapping" "notification_dlq_mapping" {
-  event_source_arn = var.notification_dlq_arn
-  function_name    = aws_lambda_function.notification_dlq_processor.arn
   batch_size       = 1
 }

@@ -1,0 +1,13 @@
+{
+    "name": "fanout-pattern",
+    "version": "1.0.0",
+    "description": "AWS SNS/SQS Fanout Pattern",
+    "scripts": {
+      "build": "npm run clean && npm run build:functions",
+      "build:functions": "cd src/order-processor && zip -r ../../terraform/modules/lambda/order-processor.zip . && cd ../notification-processor && zip -r ../../terraform/modules/lambda/notification-processor.zip . && cd ../dlq-processor && zip -r ../../terraform/modules/lambda/dlq-processor.zip .",
+      "clean": "rm -rf terraform/modules/lambda/*.zip"
+    },
+    "dependencies": {
+      "aws-sdk": "^2.1499.0"
+    }
+  }

@@ -1,4 +1,4 @@
-name: Deploy Fan-out Infrastructure
+name: Deploy Infrastructure
 
 on:
   push:
@@ -26,14 +26,10 @@ jobs:
         node-version: ${{ env.NODE_VERSION }}
 
     - name: Install Dependencies
-      run: |
-        cd src/order-processor && npm install
-        cd ../notification-processor && npm install
+      run: npm install
 
-    - name: Create Lambda Packages
-      run: |
-        cd src/order-processor && zip -r ../../terraform/order-processor.zip .
-        cd ../notification-processor && zip -r ../../terraform/notification-processor.zip .
+    - name: Build Lambda Functions
+      run: npm run build
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -51,7 +47,7 @@ jobs:
 
     - name: Terraform Format
       working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-      run: terraform fmt -check
+      run: terraform fmt -recursive
 
     - name: Terraform Plan
       working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
